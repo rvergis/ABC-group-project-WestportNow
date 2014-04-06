@@ -32,10 +32,10 @@ public class DatabaseActivity extends Activity {
 
 	private void toast(String message) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
 
-	public void createDB(View view)           { Article.createDB(this);     toast("Created database '" + Article.getPath() + "'."); }
-	public void dropDB(View view)             { Article.dropDB(this);       toast("Dropped database.");}
-	public void showAuthors(View view)        { Article.dumpAuthors(this);  toast("Authors dumped to log."); }
-	public void showArticles(View view)       { Article.dumpArticles(this); toast("Articles dumped to log."); }
+	public void createDB(View view)              { Article.createDB(this);     toast("Created database '" + Article.getPath() + "'."); }
+	public void dropDB(View view)                { Article.dropDB(this);       toast("Dropped database.");}
+	public void showAuthors(View view)           { Article.dumpAuthors(this);  toast("Authors dumped to log."); }
+	public void showArticles(View view)          { Article.dumpArticles(this); toast("Articles dumped to log."); }
 	
 	public void showSubjects(View view)          { Article.startDB(this); for (String subject  : Article.getSubjects())                            Log.d("Subject", "'" + subject + "'"); }
 	public void showNewArticles(View view)       { Article.startDB(this); for (Article article : Article.getArticlesNoOlderThan(1396745520, null)) Log.d("Article", "" + article); }
