@@ -1,11 +1,11 @@
 ABC-group-project-WestportNow
 =============================
 
-The DatabaseActivity lets you create and delete the database and dump to the log stream information about the fake content created.
+The DatabaseActivity lets you create and delete the database and dump to the log stream information about the fake content created.  Buttons allow you to exercise the two APIs described below, with the results sent to the log.
 
-The fake content includes 3 fake authors and 20 fake articles.
+The fake content includes 3 fake authors and 40 fake articles. The "subject" fields are taken from the real website, e.g. "Sport" and "Real Estate."
 
-Look at the four button handlers in DatabaseActivity to see how to create the fake database.
+Look at the button handlers in DatabaseActivity to see how to access the fake database.
 
 The Article class is where all the interesting stuff happens. See these two functions:
 

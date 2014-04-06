@@ -12,9 +12,21 @@ final static int    DB_VERSION       = 1;
 
 final static String
     SQL_FETCH_ARTICLES_NO_OLDER_THAN =
-        "SELECT a.id, a.title, a.url, a.ts, a.author_id, u.name, u.url, u.email, a.subject, a.content, a.wn_id" +
-        " FROM articles AS a, authors AS u" +
-        " WHERE a.ts >= ? AND a.author_id = u.id",
+        "SELECT a._id       AS a_id,\n" +
+        "       a.title     AS a_title,\n" +
+        "       a.url       AS a_url,\n" +
+       	"       a.ts        AS a_ts,\n" +
+        "       a.author_id AS a_author_id,\n" +
+        "       u.name      AS u_name,\n" +
+        "       u.url       AS u_url,\n" +
+        "       u.email     AS u_email,\n" +
+        "       a.subject   AS a_subject,\n" +
+        "       a.content   AS a_content,\n" +
+        "       a.wn_id     AS a_wn_id\n" +
+        "FROM   articles AS a,\n" +
+        "       authors  AS u\n" +
+        "WHERE  a.ts >= ?\n" +
+        "AND    a.author_id=u._id",
 
 	SQL_FETCH_SUBJECTS =
    	    "SELECT DISTINCT(subject) AS s FROM ARTICLES ORDER BY s",
@@ -23,7 +35,7 @@ final static String
    	    "INSERT INTO articles (title, url, ts, author_id, subject, content, wn_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
 
     SQL_CREATE_AUTHOR_TABLE =
-        "CREATE TABLE authors (\n" +
+        "CREATE TABLE IF NOT EXISTS authors (\n" +
    	    "  _id   INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\n" +
    	    "  name  TEXT(100) NOT NULL,\n" +
    	    "  email TEXT(100),\n" +
@@ -31,7 +43,7 @@ final static String
    	    ")",
    	    
    	SQL_CREATE_ARTICLE_TABLE =
-   	    "CREATE TABLE articles (\n" +
+   	    "CREATE TABLE IF NOT EXISTS articles (\n" +
         "  _id       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\n" +
         "  title     TEXT(1024) NOT NULL,\n" +
         "  url       TEXT(1024) NOT NULL,\n" +
@@ -79,19 +91,19 @@ String   title, url, subject, content, wn_id, author_name, author_url, author_em
 int      timestamp;
 
 private Article(Cursor cursor) {
- // Create an article from a database row.
-
- id           = cursor.getInt(   cursor.getColumnIndexOrThrow("a.id"));
- title        = cursor.getString(cursor.getColumnIndexOrThrow("a.title"));
- url          = cursor.getString(cursor.getColumnIndexOrThrow("a.url"));
- timestamp    = cursor.getInt(   cursor.getColumnIndexOrThrow("a.ts"));
- author_id    = cursor.getInt(   cursor.getColumnIndexOrThrow("a.author_id"));
- author_name  = cursor.getString(cursor.getColumnIndexOrThrow("u.name"));
- author_url   = cursor.getString(cursor.getColumnIndexOrThrow("u.url"));
- author_email = cursor.getString(cursor.getColumnIndexOrThrow("u.email"));
- subject      = cursor.getString(cursor.getColumnIndexOrThrow("a.subject"));
- content      = cursor.getString(cursor.getColumnIndexOrThrow("a.content"));
- wn_id        = cursor.getString(cursor.getColumnIndexOrThrow("a.wn_id"));
+    // Create an article from a database row.
+	
+    id           = cursor.getInt(   cursor.getColumnIndexOrThrow("a_id"));
+    title        = cursor.getString(cursor.getColumnIndexOrThrow("a_title"));
+    url          = cursor.getString(cursor.getColumnIndexOrThrow("a_url"));
+    timestamp    = cursor.getInt(   cursor.getColumnIndexOrThrow("a_ts"));
+    author_id    = cursor.getInt(   cursor.getColumnIndexOrThrow("a_author_id"));
+    author_name  = cursor.getString(cursor.getColumnIndexOrThrow("u_name"));
+    author_url   = cursor.getString(cursor.getColumnIndexOrThrow("u_url"));
+    author_email = cursor.getString(cursor.getColumnIndexOrThrow("u_email"));
+    subject      = cursor.getString(cursor.getColumnIndexOrThrow("a_subject"));
+    content      = cursor.getString(cursor.getColumnIndexOrThrow("a_content"));
+    wn_id        = cursor.getString(cursor.getColumnIndexOrThrow("a_wn_id"));
 }
 
 private Article() { }
@@ -109,7 +121,12 @@ static public ArrayList<Article> getArticlesNoOlderThan(int timestamp, String su
 	 													   new String[] {Integer.toString(timestamp), subjectFilter};
  Cursor             cursor     = db.rawQuery(sql, parameters);
  ArrayList<Article> result     = new ArrayList<Article>(cursor.getCount());
-
+ 
+ Log.d("Article.getArticlesNoOlderThan()", "" + cursor.getCount() + " articles were returned.");
+ for (int i=0; i<cursor.getColumnCount(); i++) {
+//	 Log.d("Article.getArticlesNoOlderThan()", "Column " + i + " is name '" + cursor.getColumnName(i) + "'.");
+ }
+ 
  while (cursor.moveToNext()) {
    result.add(new Article(cursor));
  }
@@ -186,15 +203,30 @@ static public int[] makeFakeAuthors() {
 
 static public void makeFake() {  
    int[] author_ids = makeFakeAuthors();
+   String[] SUBJECTS = new String[] {
+		   "Arts & Leisure",
+		   "Business",
+		   "Community",
+		   "Education",
+		   "Health/Fitness",
+		   "Letters",
+		   "Obituaries",
+		   "Pets Lost/Found",
+		   "Politics",
+		   "Property Sales",
+		   "Real Estate",
+		   "Special Reports",
+		   "Sports",
+		   "Teardowns"};
    
-   for (int i=0; i < 20; i++) {
+   for (int i=0; i < 40; i++) {
        Article article   = new Article();
        article.title     = "Fake article title " + i;
        article.url       = "http://example.com/fake_content/" + i;
-       article.subject   = "Fake article subject " + i;
+       article.subject   = SUBJECTS[i % SUBJECTS.length];
        article.wn_id     = "Fake article wn_id " + i;
        article.author_id = author_ids[i % author_ids.length];
-       article.timestamp = (int) (java.lang.System.currentTimeMillis() / 1000);
+       article.timestamp = 1396745514 + i;//(int) (java.lang.System.currentTimeMillis() / 1000);
        article.content   = "Fake content of four paragraphs. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec dui sem, suscipit quis vehicula vitae, volutpat nec augue. Pellentesque sapien mi, fringilla vel massa imperdiet, aliquet porttitor lorem. Proin mattis pharetra purus, sit amet bibendum sapien dapibus et. Quisque eu commodo quam. Vivamus volutpat augue at lectus commodo, sed aliquam quam venenatis. Donec egestas dignissim est et mollis. Morbi vitae lacus vitae libero congue euismod. Integer nec mi purus. Nullam laoreet nisi eu eros luctus rhoncus.\nPhasellus convallis odio urna, sed auctor nisl aliquam ac. Aliquam quam lacus, malesuada quis porta non, elementum eget neque. Maecenas rhoncus pulvinar vulputate. Etiam interdum sagittis erat quis ornare. Nam luctus nibh id nisi tempor, nec blandit ante volutpat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Pellentesque tincidunt, lorem in suscipit interdum, mi tellus consectetur elit, in fermentum neque nisi in metus.\nFusce nec ultrices eros, sed sagittis ante. Cras sollicitudin ornare justo, eu rutrum sem. Curabitur id venenatis leo. Curabitur non egestas felis, et cursus risus. Maecenas ultrices euismod neque vitae vulputate. Nulla elementum nisl et felis commodo, eu hendrerit nisi blandit. Suspendisse eu mattis nunc, sit amet blandit lorem. Quisque placerat non velit vitae consectetur. Aliquam eu molestie magna, vitae euismod tellus.\nPraesent sit amet massa hendrerit, cursus sapien eget, accumsan sapien. Cras luctus, urna vel egestas pulvinar, dolor magna tincidunt odio, ut ullamcorper mi turpis id nisl. Suspendisse justo metus, varius ac purus quis, gravida aliquam lorem. Sed dapibus mi at velit mattis, et aliquam justo placerat. Integer lacinia dictum lectus ac fringilla. Nam eget scelerisque tortor, id laoreet sapien.\nNunc egestas massa fermentum, rhoncus lacus sed, feugiat diam. Nam posuere elementum nisl, ac lobortis urna condimentum nec. Donec ut cursus lorem. Morbi tempor magna libero, et blandit augue commodo et.";
        
        article.writeToDB();
@@ -297,7 +329,8 @@ static public void dumpArticles(Context context) {
 				 						 ", title='"    + title +
 				 						 "', url="      + url +
 				 						 ", ts="        + timestamp +
-				 						 ", wn_id="     + wn_id +
+				 						 ", subject='"  + subject +
+				 						 "', wn_id="     + wn_id +
 				 						 ", author_id=" + author_id +
 				 						 ", content='"  + content +
 				 						 "'.");
@@ -310,12 +343,15 @@ private static void begin_txn() { db.execSQL("BEGIN TRANSACTION"); }
 private static void commit()    { db.execSQL("COMMIT"); }
 private static void rollback()  { db.execSQL("ROLLBACK"); }
 
+static public  String getPath() { return db.getPath(); }
+
 static public void startDB(Context context) {
 	Log.d("Article.startDB()", "Entering with context=" + context);
+	
 	if (db == null) {
 		MyDatabaseHelper dbh = new MyDatabaseHelper(context, DB_NAME, DB_VERSION, null);
 		db = dbh.getWritableDatabase();
-		Log.d("Article.startDB()", "Path to database: '" + db.getPath() + "'.");
+		Log.d("Article.startDB()", "Path to database: '" + getPath() + "'.");
 	}
 	
 	Log.d("Article.startDB()", "Leaving function.");
